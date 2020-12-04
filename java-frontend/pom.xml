@@ -12,6 +12,10 @@
 
   <name>SonarQube Java :: Front-end</name>
 
+  <properties>
+    <sonar.exclusions>java-frontend/src/main/java/org/eclipse/jdt/core/dom/ASTParser.java,java-frontend/src/main/java/org/eclipse/jdt/core/dom/CompilationUnitResolver.java</sonar.exclusions>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
