@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -585,7 +586,7 @@ class CompilationUnitResolver extends Compiler {
     return compilationUnitDeclaration;
   }
 
-  public static void resolve(
+  public static Optional<INameEnvironmentWithProgress> resolve(
     ICompilationUnit[] compilationUnits,
     String[] bindingKeys,
     ASTRequestor requestor,
@@ -630,8 +631,10 @@ class CompilationUnitResolver extends Compiler {
         problemFactory.monitor = null; // don't hold a reference to this external object
       }
     }
+    return java.util.Optional.ofNullable(environment);
   }
-  public static void resolve(
+
+  public static Optional<INameEnvironmentWithProgress> resolve(
       String[] sourceUnits,
       String[] encodings,
       String[] bindingKeys,
@@ -676,8 +679,10 @@ class CompilationUnitResolver extends Compiler {
           problemFactory.monitor = null; // don't hold a reference to this external object
         }
       }
+      return java.util.Optional.ofNullable(environment);
     }
-  public static CompilationUnitDeclaration resolve(
+
+    public static ASTUtils.Result<CompilationUnitDeclaration> resolve(
       org.eclipse.jdt.internal.compiler.env.ICompilationUnit sourceUnit,
       IJavaProject javaProject,
       List classpaths,
@@ -736,14 +741,14 @@ class CompilationUnitResolver extends Compiler {
           unitDeclaration.compilationResult.problemCount = 1;
           unitDeclaration.compilationResult.problems = new CategorizedProblem[] { resolver.abortProblem };
         }
-        return unitDeclaration;
+        return ASTUtils.Result.create(unitDeclaration).withEnvorinment(environment);
       }
       if (NameLookup.VERBOSE && environment instanceof CancelableNameEnvironment) {
         CancelableNameEnvironment cancelableNameEnvironment = (CancelableNameEnvironment) environment;
         System.out.println(Thread.currentThread() + " TIME SPENT in NameLoopkup#seekTypesInSourcePackage: " + cancelableNameEnvironment.nameLookup.timeSpentInSeekTypesInSourcePackage + "ms");  //$NON-NLS-1$ //$NON-NLS-2$
         System.out.println(Thread.currentThread() + " TIME SPENT in NameLoopkup#seekTypesInBinaryPackage: " + cancelableNameEnvironment.nameLookup.timeSpentInSeekTypesInBinaryPackage + "ms");  //$NON-NLS-1$ //$NON-NLS-2$
       }
-      return unit;
+      return ASTUtils.Result.create(unit).withEnvorinment(environment);
     } finally {
       if (environment != null) {
         // don't hold a reference to this external object
@@ -754,7 +759,8 @@ class CompilationUnitResolver extends Compiler {
       }
     }
   }
-  public static IBinding[] resolve(
+
+  public static ASTUtils.Result<IBinding[]> resolve(
     final IJavaElement[] elements,
     int apiLevel,
     Map compilerOptions,
@@ -833,7 +839,7 @@ class CompilationUnitResolver extends Compiler {
     }
     Requestor requestor = new Requestor();
     resolve(cus, bindingKeys, requestor, apiLevel, compilerOptions, javaProject, owner, flags, monitor);
-    return requestor.bindings;
+    return ASTUtils.Result.create(requestor.bindings);
   }
   /*
    * When unit result is about to be accepted, removed back pointers

@@ -19,6 +19,8 @@
  */
 package org.eclipse.jdt.core.dom;
 
+import java.util.Optional;
+import javax.annotation.Nullable;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.env.IBinaryAnnotation;
 import org.eclipse.jdt.internal.compiler.env.IBinaryType;
@@ -28,9 +30,9 @@ import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeConstants;
+import org.eclipse.jdt.internal.core.INameEnvironmentWithProgress;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import javax.annotation.Nullable;
 
 public final class ASTUtils {
 
@@ -94,6 +96,34 @@ public final class ASTUtils {
   public static String signature(IMethodBinding methodBinding) {
     char[] signature = ((MethodBinding) methodBinding).binding.signature();
     return new String(signature);
+  }
+
+  public static class Result<T> {
+
+    private final T value;
+    @Nullable
+    private INameEnvironmentWithProgress environment;
+
+    private Result(T value) {
+      this.value = value;
+    }
+
+    public static <X> Result<X> create(X value) {
+      return new Result<>(value);
+    }
+
+    public T value() {
+      return value;
+    }
+
+    public Optional<INameEnvironmentWithProgress> environment() {
+      return Optional.ofNullable(environment);
+    }
+
+    public Result<T> withEnvorinment(@Nullable INameEnvironmentWithProgress environment) {
+      this.environment = environment;
+      return this;
+    }
   }
 
 }

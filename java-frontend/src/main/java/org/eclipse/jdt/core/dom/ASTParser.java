@@ -221,6 +221,14 @@ public class ASTParser {
    */
   private int bits;
 
+  // HACK 1/5 START
+  private final List<INameEnvironmentWithProgress> resolutionEnvironments = new ArrayList<>();
+
+  public void cleanupEnvironments() {
+    resolutionEnvironments.forEach(INameEnvironmentWithProgress::cleanup);
+  }
+  // HACK 1/5 END
+
   /**
    * Creates a new AST parser for the given API level.
    * <p>
@@ -907,7 +915,10 @@ public class ASTParser {
         if ((this.bits & CompilationUnitResolver.BINDING_RECOVERY) != 0) {
           flags |= ICompilationUnit.ENABLE_BINDINGS_RECOVERY;
         }
-        CompilationUnitResolver.resolve(compilationUnits, bindingKeys, requestor, this.apiLevel, this.compilerOptions, this.project, this.workingCopyOwner, flags, monitor);
+        // HACK 2/5 START
+        CompilationUnitResolver.resolve(compilationUnits, bindingKeys, requestor, this.apiLevel, this.compilerOptions, this.project, this.workingCopyOwner, flags, monitor)
+          .ifPresent(resolutionEnvironments::add);
+        // HACK 2/5 END
       } else {
         CompilationUnitResolver.parse(compilationUnits, requestor, this.apiLevel, this.compilerOptions, flags, monitor);
       }
@@ -1002,7 +1013,10 @@ public class ASTParser {
         if ((this.bits & CompilationUnitResolver.BINDING_RECOVERY) != 0) {
           flags |= ICompilationUnit.ENABLE_BINDINGS_RECOVERY;
         }
-        CompilationUnitResolver.resolve(sourceFilePaths, encodings, bindingKeys, requestor, this.apiLevel, this.compilerOptions, getClasspath(), flags, monitor);
+        // HACK 3/5 START
+        CompilationUnitResolver.resolve(sourceFilePaths, encodings, bindingKeys, requestor, this.apiLevel, this.compilerOptions, getClasspath(), flags, monitor)
+          .ifPresent(resolutionEnvironments::add);
+        // HACK 3/5 END
       } else {
         CompilationUnitResolver.parse(sourceFilePaths, encodings, requestor, this.apiLevel, this.compilerOptions, flags, monitor);
       }
@@ -1065,7 +1079,11 @@ public class ASTParser {
       if ((this.bits & CompilationUnitResolver.IGNORE_METHOD_BODIES) != 0) {
         flags |= ICompilationUnit.IGNORE_METHOD_BODIES;
       }
-      return CompilationUnitResolver.resolve(elements, this.apiLevel, this.compilerOptions, this.project, this.workingCopyOwner, flags, monitor);
+      // HACK 4/5 START
+      ASTUtils.Result<IBinding[]> resolve = CompilationUnitResolver.resolve(elements, this.apiLevel, this.compilerOptions, this.project, this.workingCopyOwner, flags, monitor);
+      resolve.environment().ifPresent(resolutionEnvironments::add);
+      return resolve.value();
+      // HACK 4/5 END
     } finally {
       // reset to defaults to allow reuse (and avoid leaking)
       initializeDefaults();
@@ -1205,7 +1223,8 @@ public class ASTParser {
             }
             try {
               // parse and resolve
-              compilationUnitDeclaration =
+              // HACK 5/5 START
+              ASTUtils.Result<CompilationUnitDeclaration> resolve =
                 CompilationUnitResolver.resolve(
                   sourceUnit,
                   this.project,
@@ -1215,6 +1234,9 @@ public class ASTParser {
                   this.workingCopyOwner,
                   flags,
                   monitor);
+              resolve.environment().ifPresent(resolutionEnvironments::add);
+              compilationUnitDeclaration = resolve.value();
+              // HACK 5/5 END
             } catch (JavaModelException e) {
               flags &= ~ICompilationUnit.ENABLE_BINDINGS_RECOVERY;
               compilationUnitDeclaration = CompilationUnitResolver.parse(

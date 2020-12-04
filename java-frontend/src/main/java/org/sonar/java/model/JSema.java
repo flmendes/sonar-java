@@ -47,6 +47,7 @@ public final class JSema implements Sema {
   private final Map<IBinding, JSymbol> symbols = new HashMap<>();
   private final Map<IAnnotationBinding, JSymbolMetadata.JAnnotationInstance> annotations = new HashMap<>();
   private final Map<String, Type> nameToTypeCache = new HashMap<>();
+  private Runnable cleanupAction = () -> { /* do nothing by default */ };
 
   JSema(AST ast) {
     this.ast = ast;
@@ -132,4 +133,12 @@ public final class JSema implements Sema {
     return ASTUtils.resolvePackageAnnotations(ast, packageName);
   }
 
+  public JSema withCleanupAction(Runnable action) {
+    this.cleanupAction = action;
+    return this;
+  }
+
+  public void cleanup() {
+    cleanupAction.run();
+  }
 }
