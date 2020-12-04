@@ -112,6 +112,13 @@
                     <exclude>META-INF/**</exclude>
                   </excludes>
                 </filter>
+                <filter>
+                  <artifact>org.eclipse.jdt:org.eclipse.jdt.core</artifact>
+                  <excludes>
+                    <exclude>org/eclipse/jdt/core/dom/CompilationUnitResolver.class</exclude>
+                    <exclude>org/eclipse/jdt/core/dom/ASTParser.class</exclude>
+                  </excludes>
+                </filter>
               </filters>
             </configuration>
           </execution>
