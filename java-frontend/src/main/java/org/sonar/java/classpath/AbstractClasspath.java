@@ -62,8 +62,8 @@ public abstract class AbstractClasspath {
   private final InputFile.Type fileType;
   private static final Path[] STANDARD_CLASSES_DIRS = {Paths.get("target", "classes"), Paths.get("target", "test-classes")};
 
-  protected List<File> binaries;
-  protected List<File> elements;
+  protected final List<File> binaries;
+  protected final List<File> elements;
   protected boolean validateLibraries;
   protected boolean initialized;
 
@@ -71,7 +71,18 @@ public abstract class AbstractClasspath {
     this.settings = settings;
     this.fs = fs;
     this.fileType = fileType;
+    this.binaries = new ArrayList<>(getJdkJars());
+    this.elements = new ArrayList<>();
     initialized = false;
+  }
+
+  private List<File> getJdkJars() {
+    return settings.get(ClasspathProperties.SONAR_JAVA_JDK_HOME)
+      .map(File::new)
+      .filter(File::exists)
+      .map(File::toPath)
+      .map(JavaSdkUtil::getJdkClassesRoots)
+      .orElse(Collections.emptyList());
   }
 
   protected abstract void init();
