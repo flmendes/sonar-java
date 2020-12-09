@@ -1,0 +1,17 @@
+{
+  "title": "Map \"computeIfAbsent()\" and \"computeIfPresent()\" should not be used to add \"null\" values.",
+  "type": "BUG",
+  "status": "ready",
+  "remediation": {
+    "func": "Linear",
+    "linearDesc": null,
+    "linearFactor": null
+  },
+  "tags": [
+    
+  ],
+  "defaultSeverity": "Critical",
+  "ruleSpecification": "RSPEC-6104",
+  "sqKey": "S6104",
+  "scope": "All"
+}
