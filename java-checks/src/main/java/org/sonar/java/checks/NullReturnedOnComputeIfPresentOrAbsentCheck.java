@@ -25,10 +25,14 @@ public class NullReturnedOnComputeIfPresentOrAbsentCheck extends IssuableSubscri
   @Override
   public void visitNode(Tree tree) {
     MethodInvocationTree methodInvocation = (MethodInvocationTree) tree;
-    if (!isTargetMethod(methodInvocation)) {
-      return;
+    if (isComputeIfPresent(methodInvocation)) {
+      inspectComputeIfPresent(methodInvocation);
     }
-    Arguments arguments = methodInvocation.arguments();
+    //TODO Add a branch for isComputeIfAbsent
+  }
+
+  public void inspectComputeIfPresent(MethodInvocationTree invocation) {
+    Arguments arguments = invocation.arguments();
     if (arguments.size() < 2) {
       return;
     }
@@ -40,10 +44,10 @@ public class NullReturnedOnComputeIfPresentOrAbsentCheck extends IssuableSubscri
     if (!returnsNullExplicitly(lambda)) {
       return;
     }
-    reportIssue(methodInvocation, MESSAGE, Collections.emptyList(), REMEDIATION_COST_IN_MINUTES);
+    reportIssue(invocation, MESSAGE, Collections.emptyList(), REMEDIATION_COST_IN_MINUTES);
   }
 
-  public static boolean isTargetMethod(MethodInvocationTree invocation) {
+  public static boolean isComputeIfPresent(MethodInvocationTree invocation) {
     Symbol symbol = invocation.symbol();
     Symbol targetObject = symbol.owner();
     if (targetObject == null || targetObject.type() == null) {
