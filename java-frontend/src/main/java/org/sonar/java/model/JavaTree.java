@@ -129,7 +129,7 @@ public abstract class JavaTree implements Tree {
    *
    * @throws java.lang.UnsupportedOperationException if {@link #isLeaf()} returns {@code true}
    */
-  protected abstract Iterable<Tree> children();
+  protected abstract List<Tree> children();
 
   public List<Tree> getChildren() {
     if(children == null) {
@@ -189,7 +189,7 @@ public abstract class JavaTree implements Tree {
     }
 
     @Override
-    public Iterable<Tree> children() {
+    public List<Tree> children() {
       Iterable<Tree> packageIterator = packageDeclaration == null ? Collections.emptyList() : Collections.singletonList(packageDeclaration);
       Iterable<Tree> moduleIterator = moduleDeclaration == null ? Collections.emptyList() : Collections.singletonList(moduleDeclaration);
       return ListUtils.concat(
@@ -264,7 +264,7 @@ public abstract class JavaTree implements Tree {
     }
 
     @Override
-    public Iterable<Tree> children() {
+    public List<Tree> children() {
       return ListUtils.concat(
         annotations,
         Arrays.asList(packageKeyword, packageName, semicolonToken)
@@ -366,7 +366,7 @@ public abstract class JavaTree implements Tree {
     }
 
     @Override
-    public Iterable<Tree> children() {
+    public List<Tree> children() {
 
       return ListUtils.concat(
         Collections.singletonList(importToken),
@@ -445,7 +445,7 @@ public abstract class JavaTree implements Tree {
     }
 
     @Override
-    public Iterable<Tree> children() {
+    public List<Tree> children() {
       List<Tree> builder = new ArrayList<>(annotations);
       builder.add(queryToken);
       if (bound != null) {
@@ -479,7 +479,7 @@ public abstract class JavaTree implements Tree {
     }
 
     @Override
-    public Iterable<Tree> children() {
+    public List<Tree> children() {
       return Collections.singletonList(typeAlternatives);
     }
 
@@ -510,7 +510,7 @@ public abstract class JavaTree implements Tree {
     }
 
     @Override
-    public Iterable<Tree> children() {
+    public List<Tree> children() {
       throw new UnsupportedOperationException();
     }
   }
@@ -546,7 +546,7 @@ public abstract class JavaTree implements Tree {
     }
 
     @Override
-    public Iterable<Tree> children() {
+    public List<Tree> children() {
       return ListUtils.concat(annotations, Collections.singletonList(token));
     }
 
@@ -599,7 +599,7 @@ public abstract class JavaTree implements Tree {
     }
 
     @Override
-    public Iterable<Tree> children() {
+    public List<Tree> children() {
       return ListUtils.concat(annotations, Arrays.asList(type, typeArguments));
     }
   }
@@ -655,7 +655,7 @@ public abstract class JavaTree implements Tree {
     }
 
     @Override
-    public Iterable<Tree> children() {
+    public List<Tree> children() {
       boolean hasBrackets = ellipsisToken == null;
       return ListUtils.concat(
         Collections.singletonList(type),
