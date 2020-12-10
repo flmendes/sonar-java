@@ -2,12 +2,12 @@ package org.sonar.java.checks;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.IssuableSubscriptionVisitor;
-import org.sonar.plugins.java.api.semantic.Symbol;
+import org.sonar.plugins.java.api.JavaFileScannerContext;
+import org.sonar.plugins.java.api.semantic.MethodMatchers;
 import org.sonar.plugins.java.api.tree.Arguments;
-import org.sonar.plugins.java.api.tree.ExpressionTree;
 import org.sonar.plugins.java.api.tree.LambdaExpressionTree;
 import org.sonar.plugins.java.api.tree.MethodInvocationTree;
 import org.sonar.plugins.java.api.tree.Tree;
@@ -16,6 +16,12 @@ import org.sonar.plugins.java.api.tree.Tree;
 public class NullReturnedOnComputeIfPresentOrAbsentCheck extends IssuableSubscriptionVisitor {
   public static final int REMEDIATION_COST_IN_MINUTES = 10;
   public static final String MESSAGE = "Use \"Map.containsKey(key)\" followed by \"Map.put(key, null)\" to add null values.";
+  private static final MethodMatchers COMPUTE_IF_PRESENT = MethodMatchers
+    .create()
+    .ofTypes("java.util.Map")
+    .names("computeIfPresent")
+    .addParametersMatcher(MethodMatchers.ANY, MethodMatchers.ANY)
+    .build();
 
   @Override
   public List<Tree.Kind> nodesToVisit() {
@@ -25,7 +31,7 @@ public class NullReturnedOnComputeIfPresentOrAbsentCheck extends IssuableSubscri
   @Override
   public void visitNode(Tree tree) {
     MethodInvocationTree methodInvocation = (MethodInvocationTree) tree;
-    if (isComputeIfPresent(methodInvocation)) {
+    if (COMPUTE_IF_PRESENT.matches(methodInvocation)) {
       inspectComputeIfPresent(methodInvocation);
     }
     //TODO Add a branch for isComputeIfAbsent
@@ -36,34 +42,20 @@ public class NullReturnedOnComputeIfPresentOrAbsentCheck extends IssuableSubscri
     if (arguments.size() < 2) {
       return;
     }
-    ExpressionTree operator = arguments.get(1);
-    if (!isABinaryOperator(operator)) {
-      return;
-    }
-    LambdaExpressionTree lambda = (LambdaExpressionTree) operator;
-    if (!returnsNullExplicitly(lambda)) {
-      return;
-    }
-    reportIssue(invocation, MESSAGE, Collections.emptyList(), REMEDIATION_COST_IN_MINUTES);
+    returnsNullExplicitly(arguments.get(1))
+      .ifPresent((tree) -> reportIssue(invocation,
+        MESSAGE,
+        Collections.singletonList(new JavaFileScannerContext.Location("", tree)),
+        null));
   }
 
-  public static boolean isComputeIfPresent(MethodInvocationTree invocation) {
-    Symbol symbol = invocation.symbol();
-    Symbol targetObject = symbol.owner();
-    if (targetObject == null || targetObject.type() == null) {
-      return false;
+  public static Optional<Tree> returnsNullExplicitly(Tree tree) {
+    if (tree.is(Tree.Kind.LAMBDA_EXPRESSION)) {
+      Tree body = ((LambdaExpressionTree) tree).body();
+      if (body.is(Tree.Kind.NULL_LITERAL)) {
+        return Optional.of(body);
+      }
     }
-    if (!targetObject.type().is(Map.class.getCanonicalName())) {
-      return false;
-    }
-    return symbol.name().equals("computeIfPresent");
-  }
-
-  public static boolean isABinaryOperator(ExpressionTree expression) {
-    return expression.is(Tree.Kind.LAMBDA_EXPRESSION) || expression.symbolType().name().equals("BiFunction");
-  }
-
-  public static boolean returnsNullExplicitly(LambdaExpressionTree lambda) {
-    return lambda.body().is(Tree.Kind.NULL_LITERAL);
+    return Optional.empty();
   }
 }
